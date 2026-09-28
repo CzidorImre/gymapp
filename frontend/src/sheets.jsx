@@ -11,7 +11,7 @@ import { starterRoutines } from './lib/starter.js'
 import Media, { Thumb } from './components/Media.jsx'
 import Stepper from './components/Stepper.jsx'
 import Icon from './components/Icon.jsx'
-import { Button, Slider, Switch, Segmented, SelectRow, Row } from './components/ui.jsx'
+import { Button, Slider, Switch, Segmented, SelectRow, Row, NumberField, TextArea } from './components/ui.jsx'
 import { glyphOf, GLYPH_GROUPS, DEFAULT_GLYPH } from './lib/glyphs.js'
 import BodyMap from './components/BodyMap.jsx'
 import { loadOfWorkouts } from './lib/muscles.js'
@@ -243,13 +243,98 @@ function GoalSheet({ close }) {
     <Button variant="primary" onClick={() => {
       const n = Math.round((v || 0) * 10) / 10
       if (!n || n <= 0) { toast(t('Enter a valid weight')); return }
-      update(s => { s.targetW = n }); close()
+      update(s => {
+        // where the progress bar starts: kept while only the target moves, reset when the direction flips
+        const cur = lastBW(s)?.w
+        if (cur != null && (!s.targetW || s.goalFrom == null || (s.goalFrom > n) !== (cur > n))) s.goalFrom = cur
+        s.targetW = n
+      }); close()
       const b = lastBW(S()); toast(t('Goal set: {0}', fmtNum(n) + ' ' + st.unit) + (b ? ' (' + t('{0} to go', fmtNum(Math.abs(n - b.w))) + ')' : ''))
     }}>{t('Save goal')}</Button>
-    {st.targetW && <><div style={{ height: 8 }} /><Button variant="danger" onClick={() => { update(s => { s.targetW = null }); close(); toast(t('Goal removed')) }}>{t('Remove goal')}</Button></>}
+    {st.targetW && <><div style={{ height: 8 }} /><Button variant="danger" onClick={() => { update(s => { s.targetW = null; s.goalFrom = null }); close(); toast(t('Goal removed')) }}>{t('Remove goal')}</Button></>}
   </>
 }
 export const goalSheet = () => ui().openSheet(close => <GoalSheet close={close} />)
+
+/* ============================ body measurements ============================ */
+// Tape-measure sites, head to toe. Stored in cm, or inches on an lb profile — like weights,
+// switching the unit only changes the label.
+export const MEASURES = ['neck', 'chest', 'arm', 'waist', 'hips', 'thigh']
+export const MEASURE_NAME = { neck: 'Neck', chest: 'Chest', arm: 'Arm', waist: 'Waist', hips: 'Hips', thigh: 'Thigh' }
+export const lenUnit = st => (st.unit === 'lb' ? 'in' : 'cm')
+
+function MeasureSheet({ close }) {
+  const st = useStore(s => s.S)
+  const u = lenUnit(st)
+  const today = st.measures.find(m => m.d === todayISO())
+  // latest value per site, even when the latest log skipped it — shown as the placeholder
+  const last = {}
+  st.measures.forEach(m => MEASURES.forEach(k => { if (m[k]) last[k] = m[k] }))
+  const [v, setV] = useState(() => ({ ...today }))
+  const save = () => {
+    const e = {}
+    MEASURES.forEach(k => { if (v[k] > 0) e[k] = Math.round(v[k] * 10) / 10 })
+    if (!Object.keys(e).length) { toast(t('Enter at least one measurement')); return }
+    update(s => {
+      const iso = todayISO()
+      s.measures = s.measures.filter(m => m.d !== iso)
+      s.measures.push({ d: iso, t: Date.now(), ...e })
+      s.measures.sort((a, b) => (a.d < b.d ? -1 : 1))
+    })
+    close(); toast(t('Measurements saved'))
+  }
+  const recent = [...st.measures].reverse().slice(0, 3)
+  const delEntry = d => update(s => { s.measures = s.measures.filter(m => m.d !== d) })
+  return <>
+    <h3>{t('Body measurements')}</h3>
+    <div className="muted small" style={{ marginBottom: 12 }}>{t('Today') + ', ' + fmtDate(todayISO(), true) + ' · ' + t('in {0}, empty fields are skipped', u)}</div>
+    <div className="mgrid">
+      {MEASURES.map(k => <label key={k} className="mfield">
+        <span>{t(MEASURE_NAME[k])}</span>
+        <NumberField className="field" nullable value={v[k] ?? null} placeholder={last[k] ? fmtNum(last[k]) : u}
+          onChange={n => setV(o => ({ ...o, [k]: n }))} />
+      </label>)}
+    </div>
+    <div style={{ height: 14 }} />
+    <Button variant="primary" onClick={save}>{t('Save')}</Button>
+    {recent.length > 0 && <>
+      <h4 className="sec">{t('Recent')}</h4>
+      <div className="list" style={{ gap: 0 }}>
+        {recent.map(m => <div key={m.d} className="row between" style={{ padding: '9px 2px', borderBottom: '1px solid var(--sep)', gap: 10 }}>
+          <span className="small muted" style={{ flex: 'none' }}>{fmtDate(m.d, true)}</span>
+          <span className="small" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {MEASURES.filter(k => m[k]).map(k => t(MEASURE_NAME[k]) + ' ' + fmtNum(m[k])).join(' · ')}</span>
+          <button className="iconbtn" style={{ width: 32, height: 30, borderRadius: 8, fontSize: 15, color: 'var(--red)', flex: 'none' }} onClick={() => delEntry(m.d)} aria-label="delete"><Icon name="trash" /></button>
+        </div>)}
+      </div>
+    </>}
+  </>
+}
+export const measureSheet = () => ui().openSheet(close => <MeasureSheet close={close} />)
+
+/* ============================ per-exercise note ============================ */
+// One free-text note per exercise (seat height, grip, cues), shown wherever the exercise is.
+function NoteSheet({ id, close }) {
+  const [v, setV] = useState((S().exNotes || {})[id] || '')
+  const save = () => {
+    update(s => { const n = v.trim(); if (n) s.exNotes[id] = n; else delete s.exNotes[id] })
+    close()
+  }
+  return <>
+    <h3>{t('Note')}</h3>
+    <div className="muted small" style={{ marginBottom: 10 }}>{t('Seat height, grip, cues — shown every time you do this exercise.')}</div>
+    <TextArea value={v} onChange={e => setV(e.target.value)} maxLength={500} autoFocus />
+    <div style={{ height: 14 }} />
+    <Button variant="primary" onClick={save}>{t('Save')}</Button>
+  </>
+}
+export function ExNote({ id }) {
+  const note = useStore(s => (s.S.exNotes || {})[id])
+  const open = () => ui().openSheet(close => <NoteSheet id={id} close={close} />)
+  return note
+    ? <div className="exnote" style={{ cursor: 'pointer' }} onClick={open}><Icon name="pencil" style={{ float: 'right', marginLeft: 8 }} />{note}</div>
+    : <Button size="sm" variant="ghost" icon="pencil" style={{ marginBottom: 6 }} onClick={open}>{t('Add note')}</Button>
+}
 
 /* ============================ exercise detail ============================ */
 // Estimated 1RM for one exercise (issue #18): what the log already implies, plus a calculator
@@ -294,7 +379,8 @@ function ExerciseDetail({ ex, close }) {
       {(ex.sm || []).slice(0, 3).map((s, i) => <span key={i} className="tag">{t(s)}</span>)}
     </div>
     {ex.desc && <div className="exnote">{ex.desc}</div>}
-    {best > 0 && <div className="small row" style={{ marginBottom: 6, gap: 5 }}><Icon name="trophy" style={{ fontSize: 14, color: 'var(--yellow)' }} />{t('Best:')} <b className="accent">{fmtNum(best)} {st.unit}</b>{last ? ` · ${t('last')} ${fmtDate(last.d)}: ${last.sets.map(s => setLabel(ex.id, s, last.target)).join(', ')}` : ''}</div>}
+    <ExNote id={ex.id} />
+    {best > 0 &&<div className="small row" style={{ marginBottom: 6, gap: 5 }}><Icon name="trophy" style={{ fontSize: 14, color: 'var(--yellow)' }} />{t('Best:')} <b className="accent">{fmtNum(best)} {st.unit}</b>{last ? ` · ${t('last')} ${fmtDate(last.d)}: ${last.sets.map(s => setLabel(ex.id, s, last.target)).join(', ')}` : ''}</div>}
     <Button variant="primary" icon="plus" style={{ margin: '10px 0 4px' }} onClick={() => addToRoutineSheet(ex)}>{t('Add to my plan')}</Button>
     {ex.custom && <div className="row" style={{ gap: 8, marginTop: 8 }}>
       <Button icon="pencil" style={{ flex: 1 }} onClick={() => { close(); customExSheet(ex) }}>{t('Edit')}</Button>

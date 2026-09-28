@@ -5,7 +5,7 @@ import { EXIDX } from '../lib/exercises.js'
 import { lastBW, streakWeeks, setLabel, modeOf, effortOf } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtVol, todayISO, weekKey } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { bwSheet, goalSheet, calendarSheet, workoutDetailSheet, WorkoutRow, bwDeltaColor } from '../sheets.jsx'
+import { bwSheet, goalSheet, calendarSheet, workoutDetailSheet, WorkoutRow, bwDeltaColor, measureSheet, MEASURES, MEASURE_NAME, lenUnit } from '../sheets.jsx'
 import LineChart from '../components/LineChart.jsx'
 import Heatmap from '../components/Heatmap.jsx'
 import Icon from '../components/Icon.jsx'
@@ -126,6 +126,33 @@ function EffortCard({ S }) {
         {t('Most working sets belong close to failure without living there — half at the floor and half at the top average out to a healthy-looking middle.')}
       </div>
     </>}
+  </div>
+}
+
+// Tape-measure log: latest value and change since the first entry per site; tap a site to chart it.
+function MeasuresCard({ S }) {
+  const [site, setSite] = useState(null)
+  const u = lenUnit(S)
+  const logged = MEASURES.filter(k => S.measures.some(m => m[k]))
+  const cur = logged.includes(site) ? site : logged[0]
+  const series = k => S.measures.filter(m => m[k])
+  const pts = cur ? series(cur).map(m => ({ t: m.t || new Date(m.d).getTime(), y: m[cur], d: m.d })) : []
+  return <div className="card">
+    <div className="row between" style={{ marginBottom: 8 }}>
+      <h2 style={{ margin: 0 }}>{t('Body measurements')}</h2>
+      <Button size="sm" icon="plus" onClick={measureSheet}>{t('Log')}</Button>
+    </div>
+    {logged.length ? <>
+      {logged.map(k => {
+        const s = series(k), first = s[0][k], latest = s[s.length - 1][k], d = latest - first
+        return <div key={k} className="mrow" style={{ padding: '8px 0', cursor: 'pointer', color: k === cur ? 'var(--acc)' : undefined }} onClick={() => setSite(k)}>
+          <span className="nm" style={{ fontWeight: k === cur ? 600 : 400 }}>{t(MEASURE_NAME[k])}</span>
+          <span className="v">{s.length > 1 && d ? (d > 0 ? '+' : '−') + fmtNum(Math.abs(d)) : ''}</span>
+          <span className="v" style={{ color: 'var(--label)', fontWeight: 600 }}>{fmtNum(latest)} {u}</span>
+        </div>
+      })}
+      {pts.length > 1 && <div className="chart" style={{ marginTop: 8 }}><LineChart points={pts} h={140} unit={u} /></div>}
+    </> : <div className="muted small">{t('Waist, chest, arms and more — the tape shows changes the scale can miss.')}</div>}
   </div>
 }
 
@@ -255,6 +282,8 @@ export default function Stats() {
         </> : <div className="muted small">{t('Finish your first workout to see progress curves here.')}</div>}
       </div>
     </div>
+
+    <MeasuresCard S={S} />
 
     {S.workouts.length > 0 && <>
       <div className="row between" style={{ marginBottom: 10 }}>

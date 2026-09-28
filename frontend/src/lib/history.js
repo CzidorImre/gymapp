@@ -222,6 +222,13 @@ export function setsDoneActive(A) {
 }
 export const lastBW = S => (S.bodyweight.length ? S.bodyweight[S.bodyweight.length - 1] : null)
 
+// Share of the way from the goal's starting weight to the goal, 0–1. Moving away reads as 0,
+// overshooting as done. null when there is no distance to cover.
+export function goalProgress(from, cur, target) {
+  if (from == null || cur == null || target == null || from === target) return null
+  return Math.max(0, Math.min(1, (from - cur) / (from - target)))
+}
+
 // Group consecutive items sharing a superset id (sg) into "units" of indices.
 // items may be routine exercises ({sg}) or active-workout entries ({sg}).
 export function supersetUnits(items) {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, workoutVolume, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep } from './history.js'
+import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, workoutVolume, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep, goalProgress } from './history.js'
 import { EXDB } from './exercises.js'
 
 // Real ids out of the shipped catalogue, so the body-part fallback is exercised for real.
@@ -394,5 +394,20 @@ describe('workoutVolume', () => {
   it('leaves an unloaded bodyweight set at zero volume rather than inventing a number', () => {
     const w = { entries: [{ id: BW, target: { bodyweight: true }, sets: [{ w: 0, r: 20, done: true }] }] }
     expect(workoutVolume(w)).toBe(0)
+  })
+})
+
+describe('goalProgress', () => {
+  it('measures the way covered toward the goal, in either direction', () => {
+    expect(goalProgress(90, 85, 80)).toBe(0.5)     // cutting
+    expect(goalProgress(70, 72.5, 75)).toBe(0.5)   // bulking
+  })
+  it('clamps: moving away is 0, overshooting is done', () => {
+    expect(goalProgress(90, 92, 80)).toBe(0)
+    expect(goalProgress(90, 78, 80)).toBe(1)
+  })
+  it('is null when there is nothing to measure', () => {
+    expect(goalProgress(80, 80, 80)).toBe(null)
+    expect(goalProgress(null, 80, 75)).toBe(null)
   })
 })

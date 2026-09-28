@@ -389,6 +389,12 @@ h4.sec{
   background:var(--surface);border-radius:var(--r);padding:13px 15px;
   line-height:1.45;white-space:pre-wrap;font-size:15px;margin-bottom:10px;color:var(--label-2);
 }
+.lrow-in{flex:0 1 140px;width:140px;min-width:0;background:none;border:none;outline:none;text-align:right;font-size:17px;color:var(--label-2)}
+.lrow-in::placeholder{color:var(--label-3)}
+.goalbar{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden;margin:10px 0 5px}
+.goalbar i{display:block;height:100%;background:var(--yellow);border-radius:4px;transition:width .4s}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mfield{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--label-2)}
 
 /* --- search field --- */
 .searchf{position:relative;display:flex;align-items:center}
