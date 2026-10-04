@@ -3,7 +3,7 @@
 //   public/icon-512.png, public/icon-180.png
 // Then: npx @capacitor/assets generate --android
 // Run from frontend/: node scripts/render-icons.mjs
-import { readFileSync } from 'node:fs'
+import { readFileSync, mkdirSync } from 'node:fs'
 import sharp from 'sharp'
 
 const BG = '#0c0e12'
@@ -22,4 +22,15 @@ await sharp({ create: { width: 1024, height: 1024, channels: 4, background: BG }
 for (const f of ['splash', 'splash-dark']) await png(markSvg(0.3, BG), 2732).toFile(`resources/${f}.png`)
 await png(src, 512).toFile('public/icon-512.png')
 await png(src, 180).toFile('public/icon-180.png')
+
+// Google Play store listing: 512 icon (same as the PWA one) + the 1024×500 feature graphic.
+mkdirSync('resources/play', { recursive: true })
+await png(src, 512).toFile('resources/play/icon-512.png')
+const feature = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <rect width="1024" height="500" fill="${BG}"/>
+  <g transform="translate(250 256) scale(0.8) translate(-256 -256)">${mark}</g>
+  <text x="400" y="248" font-family="Segoe UI, Roboto, sans-serif" font-size="100" font-weight="700" fill="#ffffff" letter-spacing="-3">GymApp</text>
+  <text x="404" y="300" font-family="Segoe UI, Roboto, sans-serif" font-size="30" fill="#9a9aa0">Plan, train and track. Private by design.</text>
+</svg>`
+await sharp(Buffer.from(feature)).flatten({ background: BG }).png().toFile('resources/play/feature-graphic.png')
 console.log('icons rendered')
