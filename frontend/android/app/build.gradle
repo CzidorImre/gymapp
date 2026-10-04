@@ -4,10 +4,10 @@ android {
     namespace "ch.duartesantos.opengym"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "ch.duartesantos.opengym"
+        applicationId "com.czidorimre.gymapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
+        versionCode 6
         versionName "1.2.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -16,10 +16,26 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Upload key for Google Play: keystore.properties + the .jks stay out of git. Lose the key
+    // and Play support has to reset it, so keep a copy somewhere safe.
+    def ksFile = rootProject.file('keystore.properties')
+    if (ksFile.exists()) {
+        def ks = new Properties()
+        ksFile.withInputStream { ks.load(it) }
+        signingConfigs {
+            release {
+                storeFile rootProject.file(ks.storeFile)
+                storePassword ks.storePassword
+                keyAlias ks.keyAlias
+                keyPassword ks.keyPassword
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (ksFile.exists()) signingConfig signingConfigs.release
         }
     }
 }
