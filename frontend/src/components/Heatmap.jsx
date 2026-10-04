@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { fmtVol, isoOf, todayISO, MONTHS } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 
-// GitHub-style activity heatmap, shaded by time trained per day.
+// GitHub-style activity calendar: a day is marked if you trained, blank if not.
 export default function Heatmap({ S, onDay }) {
   const wrapRef = useRef(null)
   useEffect(() => { if (wrapRef.current) wrapRef.current.scrollLeft = wrapRef.current.scrollWidth }, [])
@@ -13,11 +13,6 @@ export default function Heatmap({ S, onDay }) {
     a.n++; a.vol += w.vol || 0
     a.min += Math.max(0, Math.round(((w.end || w.start) - w.start) / 60000))
   })
-  const mins = Object.values(agg).map(a => a.min).filter(v => v > 0).sort((a, b) => a - b)
-  const q = p => (mins.length ? mins[Math.min(mins.length - 1, Math.floor(p * mins.length))] : 0)
-  const t1 = q(0.25), t2 = q(0.5), t3 = q(0.75)
-  const level = a => !a ? 0 : !a.min ? 1 : a.min >= t3 ? 4 : a.min >= t2 ? 3 : a.min >= t1 ? 2 : 1
-
   const today = new Date(); today.setHours(12, 0, 0, 0)
   const end = new Date(today); end.setDate(today.getDate() - ((today.getDay() + 6) % 7))
   const start = new Date(end); start.setDate(end.getDate() - 52 * 7)
@@ -35,7 +30,7 @@ export default function Heatmap({ S, onDay }) {
       const day = new Date(colStart); day.setDate(colStart.getDate() + d)
       const key = isoOf(day)
       const a = agg[key]
-      const cls = 'hm-c l' + level(a) + (key === todayISO() ? ' today' : '') + (day > today ? ' future' : '')
+      const cls = 'hm-c l' + (a ? 4 : 0) + (key === todayISO() ? ' today' : '') + (day > today ? ' future' : '')
       cells.push(<div key={d} className={cls}
         title={key + (a ? ` · ${t(a.n === 1 ? '{0} workout' : '{0} workouts', a.n)} · ${a.min} min · ${fmtVol(a.vol, S.unit)}` : '')}
         onClick={a ? () => onDay(key) : undefined} />)
@@ -51,6 +46,5 @@ export default function Heatmap({ S, onDay }) {
         <div className="hm-grid">{cols}</div>
       </div>
     </div>
-    <div className="hm-legend">{t('Less time')} <div className="hm-c l0" /><div className="hm-c l1" /><div className="hm-c l2" /><div className="hm-c l3" /><div className="hm-c l4" /> {t('More time')}</div>
   </>
 }
