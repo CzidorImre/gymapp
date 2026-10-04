@@ -301,7 +301,7 @@ function MeasureSheet({ close }) {
       <h4 className="sec">{t('Recent')}</h4>
       <div className="list" style={{ gap: 0 }}>
         {recent.map(m => <div key={m.d} className="row between" style={{ padding: '9px 2px', borderBottom: '1px solid var(--sep)', gap: 10 }}>
-          <span className="small muted" style={{ flex: 'none' }}>{fmtDate(m.d, true)}</span>
+          <span className="small muted" style={{ flex: 'none', width: 76 }}>{fmtDate(m.d, true)}</span>
           <span className="small" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {MEASURES.filter(k => m[k]).map(k => t(MEASURE_NAME[k]) + ' ' + fmtNum(m[k])).join(' · ')}</span>
           <button className="iconbtn" style={{ width: 32, height: 30, borderRadius: 8, fontSize: 15, color: 'var(--red)', flex: 'none' }} onClick={() => delEntry(m.d)} aria-label="delete"><Icon name="trash" /></button>
@@ -332,7 +332,7 @@ export function ExNote({ id }) {
   const note = useStore(s => (s.S.exNotes || {})[id])
   const open = () => ui().openSheet(close => <NoteSheet id={id} close={close} />)
   return note
-    ? <div className="exnote" style={{ cursor: 'pointer' }} onClick={open}><Icon name="pencil" style={{ float: 'right', marginLeft: 8 }} />{note}</div>
+    ? <button className="exnote" aria-label={t('Edit note')} onClick={open}><Icon name="pencil" style={{ float: 'right', marginLeft: 8 }} />{note}</button>
     : <Button size="sm" variant="ghost" icon="pencil" style={{ marginBottom: 6 }} onClick={open}>{t('Add note')}</Button>
 }
 

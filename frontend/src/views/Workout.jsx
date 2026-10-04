@@ -6,7 +6,7 @@ import { exOr } from '../lib/exercises.js'
 import { effectiveRoutine, lastEntryFor, bestWeightFor, buildSets, setsDoneActive, supersetUnits, unitOf, setLabel, modeOf, isBw, isPerSide, sideReps, repStep, EFFORT, effortOf, stepEffort, capEffort } from '../lib/history.js'
 import { fmtNum, fmtDate, todayISO, exCount, DAYN } from '../lib/format.js'
 import { beep, vibrate } from '../lib/sound.js'
-import { t } from '../lib/i18n.js'
+import { t, dateLocale } from '../lib/i18n.js'
 import { api } from '../lib/api.js'
 import Media from '../components/Media.jsx'
 import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeightSheet, finishWorkout, workoutCompleteSheet, confirmSheet, ExNote } from '../sheets.jsx'
@@ -130,10 +130,13 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       {best > 0 && <span className="tag nocap">{t('Best:')} {fmtNum(best)} {S.unit}</span>}
     </div>
     {last && <div className="small dim" style={{ marginBottom: 4 }}>{t('Last time')} ({fmtDate(last.d)}): {last.sets.map(s => setLabel(entry.id, s, last.target)).join(', ')}</div>}
+    {/* plates print exactly — fmtNum's one decimal would turn a 1.25 plate into "1.3" */}
     {plates && <div className="plates">
-      <span>{t('Per side')} <span className="dim">({t('bar {0}', fmtNum(barW) + ' ' + S.unit)})</span></span>
-      {plates.plates.length ? plates.plates.map((p, i) => <b key={i} className="plate">{fmtNum(p)}</b>) : <span>{t('empty bar')}</span>}
-      {plates.rest > 0 && <span className="dim">{t('{0} short', fmtNum(plates.rest) + ' ' + S.unit)}</span>}
+      {t('Per side')}{' '}
+      {plates.plates.length
+        ? plates.plates.map((p, i) => <span key={i}>{i > 0 && ' + '}<b>{p.toLocaleString(dateLocale())}</b></span>)
+        : <b>{t('empty bar')}</b>}
+      <span className="dim"> · {t('bar {0}', fmtNum(barW) + ' ' + S.unit)}{plates.rest > 0 && ' · ' + t('{0} short', fmtNum(plates.rest) + ' ' + S.unit)}</span>
     </div>}
     <ExNote id={entry.id} />
     {plan && plan.why && plan.kind !== 'off' && <div className={'progline' + (plan.kind === 'deload' ? ' warn' : '')}>

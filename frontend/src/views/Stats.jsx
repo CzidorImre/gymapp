@@ -145,11 +145,11 @@ function MeasuresCard({ S }) {
     {logged.length ? <>
       {logged.map(k => {
         const s = series(k), first = s[0][k], latest = s[s.length - 1][k], d = latest - first
-        return <div key={k} className="mrow" style={{ padding: '8px 0', cursor: 'pointer', color: k === cur ? 'var(--acc)' : undefined }} onClick={() => setSite(k)}>
+        return <button key={k} className="mrow pick" aria-pressed={k === cur} style={{ color: k === cur ? 'var(--acc)' : undefined }} onClick={() => setSite(k)}>
           <span className="nm" style={{ fontWeight: k === cur ? 600 : 400 }}>{t(MEASURE_NAME[k])}</span>
           <span className="v">{s.length > 1 && d ? (d > 0 ? '+' : '−') + fmtNum(Math.abs(d)) : ''}</span>
           <span className="v" style={{ color: 'var(--label)', fontWeight: 600 }}>{fmtNum(latest)} {u}</span>
-        </div>
+        </button>
       })}
       {pts.length > 1 && <div className="chart" style={{ marginTop: 8 }}><LineChart points={pts} h={140} unit={u} /></div>}
     </> : <div className="muted small">{t('Waist, chest, arms and more — the tape shows changes the scale can miss.')}</div>}

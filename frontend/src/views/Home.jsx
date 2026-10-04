@@ -119,7 +119,7 @@ export default function Home() {
         {prog != null && <>
           <div className="goalbar"><i style={{ width: Math.round(prog * 100) + '%' }} /></div>
           <div className="small dim row between">
-            <span>{fmtNum(goalFrom)} {S.unit}</span><b style={{ color: 'var(--yellow)' }}>{Math.round(prog * 100)}%</b><span>{fmtNum(S.targetW)} {S.unit}</span>
+            <span>{t('from {0}', fmtNum(goalFrom) + ' ' + S.unit)}</span><span className="muted">{t('{0}% there', Math.round(prog * 100))}</span>
           </div>
         </>}
         <div className="chart" style={{ marginTop: 8 }}><LineChart points={bwPoints} h={130} unit={S.unit} goal={S.targetW} /></div>

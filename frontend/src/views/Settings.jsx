@@ -107,7 +107,7 @@ export default function Settings() {
     {/* ---------- general ---------- */}
     <Section title={t('General')} footer={t('Note: switching units only changes the label — logged numbers are not converted.')}>
       {!user && <Row icon="person" iconTint="var(--acc)" title={t('Your name')}>
-        <input className="lrow-in" value={S.name || ''} placeholder={t('Optional')} maxLength={30}
+        <input className="lrow-in" aria-label={t('Your name')} value={S.name || ''} placeholder={t('Optional')} maxLength={30}
           onChange={e => update(s => { s.name = e.target.value })} />
       </Row>}
       <SelectRow
