@@ -208,7 +208,7 @@ export default function Settings() {
     </Section>}
 
     <div className="dim small" style={{ textAlign: 'center', marginTop: 4, lineHeight: 1.6 }}>
-      GymApp · {t('free & open source (AGPL v3)')} · <a href={REPO} target="_blank" rel="noopener">source code</a><br />
+      GymApp · {t('free & open source (AGPL v3)')} · <a href={REPO} target="_blank" rel="noopener">source code</a> · <a href={REPO + '/blob/main/PRIVACY.md'} target="_blank" rel="noopener">privacy policy</a><br />
       based on <a href={UPSTREAM} target="_blank" rel="noopener">openGym</a> by Duarte Santos · exercise data: hasaneyldrm/exercises-dataset (CC)
     </div>
   </div>
