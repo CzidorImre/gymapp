@@ -3,7 +3,7 @@ import { api } from '../lib/api.js'
 import { localTZ } from '../lib/format.js'
 import { registerCustom } from '../lib/exercises.js'
 import { DEMO, DEMO_SEEDED } from '../lib/demo.js'
-import { MOBILE, nativeLoad, nativeSave, syncReminder } from '../lib/mobile.js'
+import { MOBILE, nativeLoad, nativeSave, syncReminder, loadMedia, syncMedia, autoBackup } from '../lib/mobile.js'
 
 const KEY = 'gym_state_v1'
 export const DEF = {
@@ -11,7 +11,8 @@ export const DEF = {
   theme: 'dark', accent: 'lime', body: 'male', targetW: null,
   // name: Home greeting when there's no signed-in profile. goalFrom: weight the current goal
   // started from (goal progress bar). exNotes: { exId: text }. measures: [{ d, t, waist, … }].
-  name: 'Imre', goalFrom: null, exNotes: {}, measures: [],
+  // barW: plate-calculator bar weight, null = 20 kg / 45 lb.
+  name: 'Imre', goalFrom: null, exNotes: {}, measures: [], barW: null,
   bodyweight: [], routines: [], week: {}, dayPlan: {},
   exWeights: {}, workouts: [], active: null, customEx: [], gifSize: 'full',
   // effort: which per-set effort scale is logged — 'none' | 'rir' | 'rpe'. null, not 'none', so
@@ -40,7 +41,7 @@ export const useStore = create((set, get) => {
   // storage eviction) and keep the native reminder schedule in step with the weekly plan.
   const nativePersist = () => {
     clearTimeout(saveTm)
-    saveTm = setTimeout(() => { saveTm = null; nativeSave(get().S); syncReminder(get().S) }, 800)
+    saveTm = setTimeout(() => { saveTm = null; nativeSave(get().S); syncReminder(get().S); syncMedia(get().S) }, 800)
   }
 
   const persist = (S, push = true) => {
@@ -153,7 +154,8 @@ export const useStore = create((set, get) => {
       // Mobile build: no backend either — restore from the file mirror (the durable copy;
       // localStorage may have been evicted since the last run) and go straight in.
       if (MOBILE) {
-        const saved = await nativeLoad()
+        // saved animations are known before the first render that counts (ready below)
+        const [saved] = await Promise.all([nativeLoad(), loadMedia()])
         const S = get().S
         if (saved && (!hasData(S) || (saved._ts || 0) >= (S._ts || 0))) {
           persist(Object.assign(clone(DEF), saved), false)
@@ -162,6 +164,8 @@ export const useStore = create((set, get) => {
         }
         get().setGuest(true)
         syncReminder(get().S)
+        syncMedia(get().S)
+        if (hasData(get().S)) autoBackup(get().S)
         set({ ready: true })
         return
       }

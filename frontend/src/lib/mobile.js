@@ -10,6 +10,8 @@
 // Like the demo build, MOBILE is replaced at build time, so all of this folds away in
 // web bundles; the Capacitor plugins are only ever imported behind it.
 import { t } from './i18n.js'
+import { localMedia, remoteMedia, planMedia } from './exercises.js'
+import { todayISO } from './format.js'
 
 export const MOBILE = import.meta.env.VITE_MOBILE === '1'
 
@@ -56,6 +58,75 @@ export async function syncReminder(S, interactive = false) {
     if (notifications.length) await LocalNotifications.schedule({ notifications })
     return true
   } catch (e) { return false }
+}
+
+// Offline animations: the GIF + still of every exercise in the plan are saved on the phone and
+// served from there (exercises.js), so a gym without signal still shows them.
+// ponytail: cache dir — Android may clear it when storage runs low; it refills next time online.
+// Kept out of the data dir so it never bloats the Google backup of the training log.
+const MEDIA = 'media'
+let mediaRun = null, mediaNext = null
+
+export async function loadMedia() {
+  try {
+    const { Filesystem, Directory } = await import('@capacitor/filesystem')
+    const { Capacitor } = await import('@capacitor/core')
+    const { files } = await Filesystem.readdir({ path: MEDIA, directory: Directory.Cache })
+    files.forEach(f => { if (!f.name.endsWith('.part')) localMedia[f.name] = Capacitor.convertFileSrc(f.uri) })
+  } catch (e) { /* nothing saved yet */ }
+}
+
+// Download whatever the plan needs and isn't saved yet. Runs one at a time; a call while it
+// runs just queues the newest state.
+export function syncMedia(S) {
+  mediaNext = S
+  if (!mediaRun) mediaRun = (async () => {
+    while (mediaNext) { const s = mediaNext; mediaNext = null; await downloadMedia(s) }
+    mediaRun = null
+  })()
+}
+
+async function downloadMedia(S) {
+  const { Filesystem, Directory } = await import('@capacitor/filesystem')
+  const { Capacitor } = await import('@capacitor/core')
+  for (const name of planMedia(S).filter(n => !localMedia[n])) {
+    try {
+      const res = await fetch(remoteMedia(name))
+      if (!res.ok) continue
+      const blob = await res.blob()
+      const data = await new Promise((ok, no) => {
+        const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = no; r.readAsDataURL(blob)
+      })
+      // written under a temp name first, so an app killed mid-write never leaves a broken file
+      const tmp = `${MEDIA}/${name}.part`, path = `${MEDIA}/${name}`
+      await Filesystem.writeFile({ path: tmp, directory: Directory.Cache, data, recursive: true })
+      await Filesystem.rename({ from: tmp, to: path, directory: Directory.Cache })
+      const { uri } = await Filesystem.getUri({ path, directory: Directory.Cache })
+      localMedia[name] = Capacitor.convertFileSrc(uri)
+    } catch (e) { return }   // offline — retried on the next change or launch
+  }
+}
+
+// Weekly automatic backup to Documents/openGym on the phone — reachable from the Files app,
+// and it survives uninstalling the app. The newest 5 are kept.
+const BAK = 'openGym'
+const BAK_RE = /^opengym-backup-(\d{4}-\d\d-\d\d)\.json$/
+export async function autoBackup(S) {
+  try {
+    const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem')
+    let files = []
+    try {
+      files = (await Filesystem.readdir({ path: BAK, directory: Directory.Documents })).files
+        .map(f => f.name).filter(n => BAK_RE.test(n)).sort()
+    } catch (e) { /* no folder yet */ }
+    const last = files.length ? files[files.length - 1].match(BAK_RE)[1] : null
+    if (last && Date.now() - Date.parse(last) < 7 * 86400000) return
+    await Filesystem.writeFile({
+      path: `${BAK}/opengym-backup-${todayISO()}.json`, directory: Directory.Documents,
+      data: JSON.stringify(S, null, 2), encoding: Encoding.UTF8, recursive: true
+    })
+    for (const old of files.slice(0, -4)) await Filesystem.deleteFile({ path: `${BAK}/${old}`, directory: Directory.Documents })
+  } catch (e) { /* storage unavailable — the next launch tries again */ }
 }
 
 // WKWebView can't do blob-URL downloads, so the backup goes out through the OS share sheet

@@ -14,6 +14,7 @@ import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
 import { nextPrescription, applyPrescription } from '../lib/progression.js'
 import { glyphOf } from '../lib/glyphs.js'
+import { platesFor, PLATES, DEFAULT_BAR, BAR_EQ } from '../lib/plates.js'
 
 /* ---------- start chooser (no active workout) ---------- */
 function StartChooser() {
@@ -76,6 +77,11 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
   const bw = !cardio && isBw(cfg)
   const added = bw && entry.sets.some(s => s.w > 0)
   const loadCol = { f: 'w', step: 2.5, dec: true, hd: bw ? t('Added ({0})', S.unit) : t('Weight ({0})', S.unit) }
+  // Plates per side for the set in front of you — barbell lifts only.
+  const barW = S.barW || DEFAULT_BAR[S.unit] || 20
+  const nextW = (entry.sets.find(s => !s.done) || entry.sets[entry.sets.length - 1] || {}).w
+  const plates = mode === 'reps' && !bw && BAR_EQ.includes(ex.eq) && nextW > 0
+    ? platesFor(nextW, barW, PLATES[S.unit] || PLATES.kg) : null
   // The reps column is the total in every mode, unilateral included — the stepper walks in
   // twos there so the number you land on is one you can actually split evenly.
   const repCol = { f: 'r', step: repStep(cfg), dec: false, hd: t('Reps') }
@@ -124,6 +130,11 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       {best > 0 && <span className="tag nocap">{t('Best:')} {fmtNum(best)} {S.unit}</span>}
     </div>
     {last && <div className="small dim" style={{ marginBottom: 4 }}>{t('Last time')} ({fmtDate(last.d)}): {last.sets.map(s => setLabel(entry.id, s, last.target)).join(', ')}</div>}
+    {plates && <div className="plates">
+      <span>{t('Per side')} <span className="dim">({t('bar {0}', fmtNum(barW) + ' ' + S.unit)})</span></span>
+      {plates.plates.length ? plates.plates.map((p, i) => <b key={i} className="plate">{fmtNum(p)}</b>) : <span>{t('empty bar')}</span>}
+      {plates.rest > 0 && <span className="dim">{t('{0} short', fmtNum(plates.rest) + ' ' + S.unit)}</span>}
+    </div>}
     <ExNote id={entry.id} />
     {plan && plan.why && plan.kind !== 'off' && <div className={'progline' + (plan.kind === 'deload' ? ' warn' : '')}>
       <Icon name={plan.kind === 'up' ? 'arrowUp' : plan.kind === 'deload' ? 'arrowDown' : 'lightbulb'} />

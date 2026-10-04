@@ -11,6 +11,8 @@ import { t, LANGS, INSTR_LANGS } from '../lib/i18n.js'
 import { DEMO, REPO } from '../lib/demo.js'
 import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
 import { loadStarterPlan, confirmSheet, importFromApp } from '../sheets.jsx'
+import { planMedia, localMedia } from '../lib/exercises.js'
+import { DEFAULT_BAR } from '../lib/plates.js'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
 
@@ -23,6 +25,7 @@ export default function Settings() {
   const fileRef = useRef(null)
   const importRef = useRef(null)
   const wakeOK = wakeLockSupported()
+  const planGifs = MOBILE ? planMedia(S).filter(n => n.endsWith('.gif')) : []
 
   const doExport = async () => {
     const json = JSON.stringify(S, null, 2)
@@ -76,6 +79,9 @@ export default function Settings() {
     <Section title={MOBILE ? t('Your data') : DEMO ? t('Demo') : t('Account')}>
       {MOBILE ? <>
         <Row icon="lock" iconTint="var(--acc)" title={t('All data stays on this phone')} subtitle={t('No account, no cloud — back it up anytime with Export below.')} />
+        <Row icon="download" iconTint="var(--blue)" title={t('Automatic backup')} subtitle={t('Every week to Documents/openGym on this phone — the newest 5 are kept. Copy one off the phone now and then.')} />
+        <Row icon="play" iconTint="var(--orange)" title={t('Offline animations')}
+          subtitle={t('{0} of {1} exercises in your plan saved on this phone', planGifs.filter(n => localMedia[n]).length, planGifs.length)} />
         <Row icon="rocket" iconTint="var(--indigo)" title={t('Self-host openGym')} subtitle={t('Passkey sign-in, sync across your devices, your own data.')} accessory="chevron"
           onClick={() => window.open(REPO, '_blank', 'noopener')} />
       </> : DEMO ? <>
@@ -131,6 +137,9 @@ export default function Settings() {
             onChange={v => update(s => { s.keepAwake = v })} />
         </Row>
       )}
+      <SelectRow icon="dumbbell" iconTint="var(--teal)" title={t('Bar weight')} sheetTitle={t('Bar weight (plate calculator)')}
+        value={S.barW || DEFAULT_BAR[S.unit]} onChange={v => update(s => { s.barW = v })}
+        options={(S.unit === 'lb' ? [45, 35, 25, 15] : [20, 15, 10, 7]).map(v => ({ value: v, label: v + ' ' + S.unit }))} />
       <Row icon="bell" iconTint="var(--pink)" title={t('Sounds')}>
         <Switch checked={!!S.sound} onChange={v => update(s => { s.sound = v })} />
       </Row>

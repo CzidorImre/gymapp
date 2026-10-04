@@ -393,6 +393,8 @@ h4.sec{
 .lrow-in::placeholder{color:var(--label-3)}
 .goalbar{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden;margin:10px 0 5px}
 .goalbar i{display:block;height:100%;background:var(--yellow);border-radius:4px;transition:width .4s}
+.plates{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;color:var(--label-2);margin-bottom:8px}
+.plate{background:var(--surface-2);color:var(--label);border-radius:6px;padding:2px 8px;font-weight:600}
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mfield{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--label-2)}
 

@@ -31,8 +31,16 @@ export const allExercises = st => [...(st.customEx || []), ...EXDB]
 // shipping ~140 MB of images into the deployment.
 const IMG_BASE = import.meta.env.VITE_IMG_BASE || 'img/'
 const GIF_BASE = import.meta.env.VITE_GIF_BASE || 'gif/'
-export const imgSrc = ex => IMG_BASE + ex.img
-export const gifSrc = ex => GIF_BASE + ex.gif
+// Mobile build: copies saved on the phone for offline use (lib/mobile.js), file name → local URL.
+export const localMedia = {}
+export const remoteMedia = name => (name.endsWith('.gif') ? GIF_BASE : IMG_BASE) + name
+export const imgSrc = ex => localMedia[ex.img] || IMG_BASE + ex.img
+export const gifSrc = ex => localMedia[ex.gif] || GIF_BASE + ex.gif
+// Media files of every exercise in the plan (and a running workout) — what offline mode keeps.
+export const planMedia = S => [...new Set(
+  [...S.routines.flatMap(r => r.ex), ...(S.active?.entries || [])]
+    .map(e => EXIDX[e.id]).filter(ex => ex && ex.gif).flatMap(ex => [ex.gif, ex.img]).filter(Boolean)
+)]
 
 // Cardio exercises log time + speed instead of weight × reps.
 export const isCardio = idOrEx => (typeof idOrEx === 'string' ? EXIDX[idOrEx] : idOrEx)?.bp === 'cardio'
