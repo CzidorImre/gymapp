@@ -1,13 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512">
-  <!-- App-icon source == the PWA icon (public/icon-512.png), geometry traced 1:1 so the
-       native app, the home-screen PWA and the website favicon all show the same icon.
-       Generate platform icons + splash via `npx @capacitor/assets generate` — docs/MOBILE.md. -->
+  <!-- GymApp icon: kettlebell in the app's accent (#30d158, ACCENTS.lime) on the app background.
+       Platform icons + splash are rendered from this by scripts/render-icons.mjs. -->
   <rect width="512" height="512" fill="#0c0e12"/>
-  <g fill="#a3e635">
-    <rect x="80" y="242" width="352" height="28"/>
-    <rect x="80" y="199" width="36" height="114"/>
-    <rect x="131" y="169" width="47" height="174"/>
-    <rect x="334" y="169" width="47" height="174"/>
-    <rect x="396" y="199" width="36" height="114"/>
+  <g id="mark" transform="translate(0,-13)">
+    <path d="M190 238 V200 a66 66 0 0 1 66 -66 a66 66 0 0 1 66 66 V238" fill="none" stroke="#30d158" stroke-width="40" stroke-linecap="round"/>
+    <path d="M201.78 414 A112 112 0 1 1 310.22 414 Z" fill="#30d158"/>
   </g>
 </svg>

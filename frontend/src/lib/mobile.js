@@ -107,9 +107,9 @@ async function downloadMedia(S) {
   }
 }
 
-// Weekly automatic backup to Documents/openGym on the phone — reachable from the Files app,
+// Weekly automatic backup to Documents/GymApp on the phone — reachable from the Files app,
 // and it survives uninstalling the app. The newest 5 are kept.
-const BAK = 'openGym'
+const BAK = 'GymApp'
 const BAK_RE = /^opengym-backup-(\d{4}-\d\d-\d\d)\.json$/
 export async function autoBackup(S) {
   try {

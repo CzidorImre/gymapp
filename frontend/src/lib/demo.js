@@ -11,4 +11,6 @@
 // lands in a self-hosted bundle.
 export const DEMO = import.meta.env.VITE_DEMO === '1'
 export const DEMO_SEEDED = 'gym_demo_seeded_v1'
-export const REPO = 'https://github.com/DuarteSantos8/openGym'
+export const REPO = 'https://github.com/CzidorImre/gymapp'
+// GymApp is a fork; the original project, credited in Settings (AGPL keeps its notices).
+export const UPSTREAM = 'https://github.com/DuarteSantos8/openGym'
