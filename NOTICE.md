@@ -46,11 +46,10 @@ SOFTWARE.
 
 ## Exercise data & media
 
-The exercise names, instructions (English in `frontend/src/lib/exercises-data.js`, other
-languages in `frontend/src/instr/`, regenerated via `scripts/build-instructions.mjs`), images
-and animations (fetched into `media/` at build time) come from
+The exercise names and instructions (`frontend/src/lib/exercises-data.js`), images and
+animations come from
 [**hasaneyldrm/exercises-dataset**](https://github.com/hasaneyldrm/exercises-dataset)
-and are **not** covered by openGym's AGPL license — they remain under that dataset's own terms.
-The media files are not distributed in this repository; they are downloaded from the upstream
-source on first run. If you redistribute openGym with the media included, review the upstream
-license first.
+and are **not** covered by the AGPL license — they remain under that dataset's own terms.
+The media files are not distributed in this repository or the app; the app downloads them
+from the dataset's public CDN. If you redistribute GymApp with the media included, review the
+upstream license first.

@@ -14,7 +14,6 @@ import { glyphOf } from '../lib/glyphs.js'
 export default function Home() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
-  const user = useStore(s => s.user)
   const [weekOffset, setWeekOffset] = useState(0)
 
   const today = new Date()
@@ -23,7 +22,7 @@ export default function Home() {
   const bw = lastBW(S)
   const prevBW = S.bodyweight.length > 1 ? S.bodyweight[S.bodyweight.length - 2] : null
   const delta = bw && prevBW ? bw.w - prevBW.w : null
-  const name = user?.name || S.name?.trim()
+  const name = S.name?.trim()
   // goals set before goalFrom existed start from the first weigh-in
   const goalFrom = S.goalFrom ?? S.bodyweight[0]?.w
   const prog = S.targetW && bw ? goalProgress(goalFrom, bw.w, S.targetW) : null
